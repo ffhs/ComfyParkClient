@@ -104,7 +104,7 @@ class ComfyParkClient {
 
 	private function callBackend($data) {
 		$dataRequest = json_encode(array(
-			'customerID' => $this->userData['uid'],
+			'customerID' => md5($this->userData['uid']),
 			'gateUUID' => $data['gate'],
 			'cmd' => $data['cmd'],
 		));
