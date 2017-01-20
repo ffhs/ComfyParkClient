@@ -64,12 +64,14 @@ class ComfyParkClient {
 				$result = $res->fetch_assoc();
 			}
 
-			$_SESSION['comfyParkClient']['auth']['user'] = $result;
+			if($result) {
+				$_SESSION['comfyParkClient']['auth']['user'] = $result;
 
-			return array(
-				'success' => true,
-				'successMessage' => 'Login OK',
-			);
+				return array(
+					'success' => true,
+					'successMessage' => 'Login OK',
+				);
+			}
 		}
 
 		$stmt->close();

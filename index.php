@@ -32,11 +32,14 @@ class Request{
 		$response = array();
 		switch ($data['cmd']) {
 			case 'login':
+				if($this->client->isAuthenticated()){
+					$this->showHome();
+				}
+
 				$response = $this->client->login($data);
 				if($response['success']) {
 					$this->showHome($response);
 				}
-				die();
 
 				$this->showLogin($response);
 			break;
