@@ -1,0 +1,30 @@
+.alert_main_container{
+	position:relative;
+}
+
+#alert_main{
+	position:absolute;
+	top:-50px;
+	right:0;
+	width:100%;
+	z-index:100;
+}
+
+#alert_info{
+	min-height:103px;
+	opacity:0;
+	padding-bottom:0;
+	margin-bottom:0;
+}
+
+#alert_info .glyphicon{
+	font-size:180%;
+}
+
+
+#alert_info .title{
+	font-size:180%;
+	font-weight:bold;
+	padding-left: 6px;
+}
+
