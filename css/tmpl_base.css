@@ -28,3 +28,10 @@
 	padding-left: 6px;
 }
 
+.btn_gate_in{
+	float:left;
+}
+
+.btn_gate_out{
+	float:right;
+}
