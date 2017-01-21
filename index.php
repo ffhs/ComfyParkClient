@@ -1,149 +1,90 @@
 <?php
+session_start();
+
 /**
- * ComfyParkClient
+ * ComfyPark Request
  *
  * @author         Thierry Baumann <thierry@swissmademarketing.com>
  * @copyright
  * @package        ComfyParkClient
  * @subpackage     Core
  */
-class ComfyParkClient {
-	private $config = array(
-		'comfyParkBackend' => array(
-			'url' => 'https://ei4i85h9ni.execute-api.eu-west-1.amazonaws.com/prod/comfyparkbackend',
-			'apiKey' => 'UN00DjpQzp75pCbKZ3alu7aAIltVI0zt5Feoha3C',
-		),
-		'mysql' => array(
-			'servername' => 'comfyparkdb.cjn6mrex9bqq.eu-west-1.rds.amazonaws.com',
-			'username' => 'ffhs',
-			'password' => 'glauer.ch',
-			'dbname' => 'comfypark',
-		),
-	);
+require_once(dirname(__FILE__) . '/ComfyParkClient.php');
 
-	private $userData;
-
+class Request{
+	private $client;
 
 	public function __construct() {
-		$this->userData = array();
-		if($this->isAuthenticated()) {
-			$this->userData = $_SESSION['comfyParkClient']['auth']['user'];
-		}
+		$this->client = new ComfyParkClient();
 	}
 
+	public function process() {
+		$data = $_REQUEST;
 
-	public function login($options) {
-		if($this->isAuthenticated()) {
-			return $this->error;
-		}
-		// login
-		$username = $options['username'];
-		$password = $options['password'];
-
-		if(!strlen($username) || !strlen($password)) {
-			return array(
-				'success' => false,
-				'errorMessage' => 'Authentication failed: No username/password given',
-			);
-		}
-
-		// create mysql connection
-		$handler = new mysqli($this->config['mysql']['servername'], $this->config['mysql']['username'], $this->config['mysql']['password'], $this->config['mysql']['dbname']);
-
-		$stmt = $handler->prepare('SELECT * FROM users WHERE username = ? AND password = MD5(?)');
-
-	   	// bind parameters
-		$stmt->bind_param('ss', $username, $password);
-
-		// execute query
-		$stmt->execute();
-
-		if($res = $stmt->get_result()) {
-			for($rowNo = ($res->num_rows - 1); $rowNo >= 0; $rowNo --) {
-			   	$res->data_seek($rowNo);
-				$result = $res->fetch_assoc();
+		if(!isset($data) || !$data) {
+			if($this->client->isAuthenticated()){
+				$this->showHome();
 			}
 
-			if($result) {
-				$_SESSION['comfyParkClient']['auth']['user'] = $result;
-
-				return array(
-					'success' => true,
-					'successMessage' => 'Login OK',
-				);
-			}
+			$this->showLogin();
 		}
 
-		$stmt->close();
-
-		return array(
-			'success' => false,
-			'errorMessage' => 'Authentication failed',
-		);
-	}
-
-
-	public function isAuthenticated() {
-		return (bool)isset($_SESSION['comfyParkClient']['auth']['user']['uid']);
-	}
-
-
-
-	public function getStatus($data) {
-		return $this->callBackend(array_merge($data, array(
-			'cmd' => 'getStatus',
-		)));
-	}
-
-	public function parking($data) {
-		return $this->callBackend(array_merge($data, array(
-			'cmd' => 'parking',
-		)));
-	}
-
-
-	private function callBackend($data) {
-		$dataRequest = json_encode(array(
-			'customerID' => md5($this->userData['uid']),
-			'gateUUID' => $data['gate'],
-			'cmd' => $data['cmd'],
-		));
-
-		$ch = curl_init($this->config['comfyParkBackend']['url']);
-
-		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $dataRequest);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-			'Content-Type: application/json',
-			'Content-Length: ' . strlen($dataRequest),
-			'x-api-key: ' . $this->config['comfyParkBackend']['apiKey'],
-		));
-
-		if($result = curl_exec($ch)) {
-			if($result = json_decode($result, true)) {
-				if($result['success']) {
-					return array(
-						'success' => true,
-						//'successData' => $result,
-						'successMessage' => $result['result'],
-						'gateAction' => $result['gateAction'],
-						'timeIn' => $result['timeIn'],
-					);
+		$response = array();
+		switch ($data['cmd']) {
+			case 'login':
+				if($this->client->isAuthenticated()){
+					$this->showHome();
 				}
 
-				return array(
-					'success' => false,
-					//'successData' => $result,
-					'errorMessage' => $result['result'],
-				);
-			}
+				$response = $this->client->processLogin($data);
+				if($response['success']) {
+					$this->showHome($response);
+				}
+
+				$this->showLogin($response);
+			break;
+
+			case 'parking':
+				die(json_encode($this->client->processParking($data)));
+			break;
+
+			case 'status':
+				die(json_encode($this->client->processStatus()));
+			break;
+
+			case 'logout':
+				session_destroy();
+				header("Location: " . "./");
+			break;
 		}
 
-		return array(
-			'success' => false,
-			'errorMessage' => 'Error - command couldn\'t be executed',
-		);
+		if(!$response) {
+			$this->showLogin();
+		}
+	}
+
+	private function showLogin($options = array()) {
+		$data = file_get_contents(dirname(__FILE__) . '/templates/login.tmpl');
+
+		die(strtr($data, array(
+			'%ComfyParkJSON%' => json_encode(array(
+				'site' => 'login',
+				'data' => $options,
+			)),
+		)));
+	}
+
+	private function showHome($options = array()) {
+		$data = file_get_contents(dirname(__FILE__) . '/templates/home.tmpl');
+
+		die(strtr($data, array(
+			'%ComfyParkJSON%' => json_encode(array(
+				'site' => 'home',
+				'data' => $options,
+			)),
+		)));
 	}
 }
+
+$request = new Request();
+$request->process();

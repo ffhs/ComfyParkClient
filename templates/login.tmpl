@@ -18,6 +18,7 @@
     <link href="css/ie10-viewport-bug-workaround.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
+	<link href="css/tmpl_base.css" rel="stylesheet">
     <link href="css/tmpl_login.css" rel="stylesheet">
 
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
@@ -34,6 +35,13 @@
   <body>
 
     <nav class="navbar navbar-inverse navbar-fixed-top">
+	 <div class="container alert_main_container">
+		  <div id="alert_main" class="alert alert-success alert-dismissible" role="alert" style="opacity:0;">
+			  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			  <span class="alert_main_body"></span>
+		  </div>
+	  </div>
+	  
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -106,5 +114,12 @@
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="js/ie10-viewport-bug-workaround.js"></script>
 	<script src="js/docs.min.js"></script>
+	<script src="js/comfyPark.js"></script>
+
+	<script type="text/javascript">
+	//<![CDATA[
+		ComfyPark = %ComfyParkJSON%;
+	//]]>
+	</script>
   </body>
 </html>

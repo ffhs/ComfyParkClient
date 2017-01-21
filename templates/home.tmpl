@@ -100,7 +100,14 @@
         <p>Welcome to the simple ComfyPark Client... Let's Park</p>
 		 
 		 <div id="alert_info" class="alert alert-info alert-dismissible" role="alert" style="opacity:0;">
-			  <span class="glyphicon glyphicon-flag" aria-hidden="true"></span><span class="alert_main_body"></span>
+			<span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+			<span class="alert_main_body">
+				  <span class="title">Current Parking</span>
+				  <br/>
+				  <span>Time In: <span id="alert_info_timeIn"></span></span>
+				  <br/>
+				  <span>Parking-Time: <span id="alert_info_parkingTime"></span></span>				
+			</span>
 		  </div>
       </div>
 
@@ -190,5 +197,11 @@
 	<script src="js/docs.min.js"></script>
 	<script src="js/jquery.plugin.min.js"></script>
 	<script src="js/jquery.countdown.min.js"></script>
-  </body>
+	
+	<script type="text/javascript">
+	//<![CDATA[
+		ComfyPark = %ComfyParkJSON%;
+	//]]>
+	</script> 
+	</body>
 </html>
