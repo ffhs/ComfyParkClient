@@ -4,7 +4,7 @@ session_start();
 /**
  * ComfyPark Request
  *
- * @author         Thierry Baumann <thierry@swissmademarketing.com>
+ * @author         Thierry Baumann <thierry.baumann@students.ffhs.ch>
  * @copyright
  * @package        ComfyParkClient
  * @subpackage     Core

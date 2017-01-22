@@ -2,7 +2,7 @@
 /**
  * ComfyParkClient
  * 
- * @author         Thierry Baumann <thierry@swissmademarketing.com>
+ * @author         Thierry Baumann <thierry.baumann@students.ffhs.ch>
  * @copyright
  * @package        ComfyParkClient
  * @subpackage     Core
@@ -12,20 +12,20 @@ class ComfyParkClient {
 	private $userToken;
 
 	private $config;
+
 	public function __construct() {
 		// read main config
 		require(__DIR__ . '/config.php');
 		$this->config = $config;
 
-		$this->userData = array();
 		if($this->isAuthenticated()) {
-			$this->user = $_SESSION['comfyParkClient']['auth']['user'];
-			$this->userToken = $_SESSION['comfyParkClient']['auth']['userToken'];
+			$this->user = $_SESSION['comfyPark']['auth']['user'];
+			$this->userToken = $_SESSION['comfyPark']['auth']['userToken'];
 		}
 	}
 
 	public function isAuthenticated() {
-		return (bool)isset($_SESSION['comfyParkClient']['auth']['user']['uid']);
+		return (bool)isset($_SESSION['comfyPark']['auth']['user']['uid']);
 	}
 
 
@@ -33,14 +33,14 @@ class ComfyParkClient {
 		if($this->isAuthenticated()) {
 			return array(
 				'success' => true,
-				'successMessage' => 'Login OK',
+				'successMessage' => 'Login successful',
 			);
 		}
 
 		if(!strlen($data['username']) || !strlen($data['password'])) {
 			return array(
 				'success' => false,
-				'errorMessage' => 'Authentication failed: No username/password given',
+				'errorMessage' => 'Login failed, please check your username and password',
 			);
 		}
 
@@ -49,45 +49,50 @@ class ComfyParkClient {
 			$data['password'] = $this->getHash($data['password']);
 		}
 
-		$result = $this->runOperation($this->config['backend']['requests']['login']['url'], array(
+		$response = $this->runOperation($this->config['backend']['requests']['login']['url'], array(
 			'username' => $data['username'],
 			'password' => $data['password'],
 		));
 
-		if(isset($result) && $result['success']){
-			$_SESSION['comfyParkClient']['auth']['user'] = $result['data']['user'];
-			$_SESSION['comfyParkClient']['auth']['userToken'] = $result['data']['userToken'];
+		if(isset($response) && $response['success']){
+			$_SESSION['comfyPark']['auth']['user'] = $response['responseData']['user'];
+			$_SESSION['comfyPark']['auth']['userToken'] = $response['responseData']['userToken'];
 
 			return array(
 				'success' => true,
-				'successMessage' => $result['successMessage'],
+				'successMessage' => $response['successMessage'],
 			);
 		}
 
 		return array(
 			'success' => false,
-			'errorMessage' => $result['errorMessage'],
+			'errorMessage' => $response['errorMessage'],
 		);
 	}
 
 	public function processStatus() {
 		return $this->runOperation($this->config['backend']['requests']['status']['url'], array(
-			'userToken' => $this->userToken,
-		));
+		), true);
 	}
 
 	public function processParking($data) {
 		return $this->runOperation($this->config['backend']['requests']['parking']['url'], array(
-			'userToken' => $this->userToken,
 			'gateId' => $data['gateId'],
-		));
+		), true);
 	}
 
-	private function runOperation($url, $data) {
+	private function runOperation($url, $data = array(), $useToken = false) {
+		if($useToken){
+			// add user token to request
+			$data['userToken'] = $this->userToken;
+
+			// add request token to request
+			$data['requestToken'] = $this->buildRequestToken($data);
+		}
+
 		$dataRequest = json_encode($data);
 
 		$ch = curl_init($url);
-
 
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $dataRequest);
@@ -99,20 +104,20 @@ class ComfyParkClient {
 			'x-api-key: ' . $this->config['backend']['apiKey'],
 		));
 
-		if($result = curl_exec($ch)) {
-			if($result = json_decode($result, true)) {
-				if($result['success']) {
+		if($responseData = curl_exec($ch)) {
+			if($responseData = json_decode($responseData, true)) {
+				if($responseData['success']) {
 					return array(
 						'success' => true,
-						'successMessage' => $result['message'],
-						'data' => $result,
+						'successMessage' => $responseData['message'],
+						'responseData' => $responseData,
 					);
 				}
 
 				return array(
 					'success' => false,
-					'errorMessage' => $result['message'],
-					'data' => $result,
+					'errorMessage' => $responseData['message'],
+					'responseData' => $responseData,
 				);
 			}
 		}
@@ -121,6 +126,20 @@ class ComfyParkClient {
 			'success' => false,
 			'errorMessage' => 'Error - command couldn\'t be executed',
 		);
+	}
+
+	private function buildRequestToken($data){
+		$requestTokenValue = $this->user['uid'] . $this->user['countLogins'];
+
+		foreach($data as $key => $value){
+			if($key == 'requestToken') {
+				continue;
+			}
+
+			$requestTokenValue .= $key . $value;
+		}
+
+		return $this->getHash($requestTokenValue);
 	}
 
 	private function getHash($data, $useSalt = true) {
