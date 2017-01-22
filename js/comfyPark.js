@@ -132,9 +132,9 @@ var comfyPark = function(){
 		},
 		
 		showAlert: function(message, success, hideDelay) {
-			hideDelay = typeof success !== 'undefined' ? hideDelay : 3000;
 			success = typeof success !== 'undefined' ? success : true;
-				  
+			hideDelay = typeof hideDelay !== 'undefined' ? hideDelay : 3000;
+
 			if($('#alert_main').css('opacity') > 0){		
 				$('#alert_main').css('top', '-50px');
 				$('#alert_main').css('opacity', '0');
@@ -157,7 +157,7 @@ var comfyPark = function(){
 				opacity: '1'
 			}, 1000);				
 			
-			if(hideDelay){
+			if(hideDelay && hideDelay > 0){
 				$('#alert_main').delay(hideDelay).animate({
 					top: '-50px',
 					opacity: '0'
